@@ -1,15 +1,57 @@
-# JohnnyMorganz/stylua-action
+# StyLua GitHub Action <a href="https://github.com/JohnnyMorganz/stylua-action/actions"><img alt="stylua-action status" src="https://github.com/JohnnyMorganz/stylua-action/workflows/build-test/badge.svg"></a>
 
-GitHub Action to run StyLua, an opinionated Lua code formatter
+GitHub Action to run [StyLua](https://github.com/JohnnyMorganz/StyLua), a Lua code formatter.
 
-Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at [https://github.com/JohnnyMorganz/stylua-action](https://github.com/JohnnyMorganz/stylua-action).
+Installs the StyLua binary (from GitHub releases), and caches it. Any StyLua command can then be run.
 
-## Versions
+> **NOTE:** We recommend using a toolchain manager such as [aftman](https://github.com/LPGhatguy/aftman) to manage StyLua, as it allows you to define the version used throughout your project - both on the command line, and in GitHub actions.
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| v3.0.0 | [`v3.0.0`](https://github.com/chainguard-actions/JohnnyMorganz-stylua-action/tree/v3.0.0) | [`762d02a`](https://github.com/JohnnyMorganz/stylua-action/commit/762d02aa393cd7c7f196feb932d16db1e5c5aa77) |
-| v5.0.0 | [`v5.0.0`](https://github.com/chainguard-actions/JohnnyMorganz-stylua-action/tree/v5.0.0) | [`76fd70c`](https://github.com/JohnnyMorganz/stylua-action/commit/76fd70c03e6340ceaf673366712db9b20560b402) |
+## Usage
+
+```yaml
+- uses: actions/checkout@v4
+- uses: JohnnyMorganz/stylua-action@v4
+  with:
+    token: ${{ secrets.GITHUB_TOKEN }}
+    version: latest # NOTE: we recommend pinning to a specific version in case of formatting changes
+    # CLI arguments
+    args: --check .
+```
+
+If you would just like to install `stylua`, but not run it (e.g., since it is used as part of a wider CI script), then
+you can set `args: false`:
+
+```yaml
+- uses: actions/checkout@v4
+- uses: JohnnyMorganz/stylua-action@v4
+  with:
+    token: ${{ secrets.GITHUB_TOKEN }}
+    version: latest # NOTE: we recommend pinning to a specific version in case of formatting changes
+    # This disables running `stylua`
+    args: false
+  # Run stylua independently
+- run: |
+    stylua --version
+```
+
+### Parameters
+
+#### `token` (Required)
+
+GitHub token. Required since the binary is downloaded from GitHub releases (to speed download)
+
+#### `args` (Required)
+
+The arguments to pass to the StyLua binary. If you don't want to run the binary, set `args: false`.
+
+#### `version` (Required)
+
+The version of StyLua to use. Follows semver syntax.
+Alternatively, supply `latest` to use the latest available release.
+
+**NOTE: using `latest` may cause the action to fail if StyLua updates and the formatting changes!**
+
+Based off https://github.com/Roblox/setup-foreman, licensed under [MIT](https://github.com/Roblox/setup-foreman/blob/master/LICENSE.txt)
 
 ## Privacy
 
