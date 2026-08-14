@@ -1,0 +1,73 @@
+name: 'build-test'
+on: # rebuild any PRs and main branch changes
+  pull_request:
+  push:
+    branches:
+      - main
+      - 'releases/*'
+
+permissions:
+  contents: read
+
+jobs:
+  build: # make sure build/ci work properly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Install packages
+        run: |
+          npm install
+      - name: Rebuild
+        run: |
+          npm run all
+      - name: Ensure dist is updated
+        run: |
+          git diff --exit-code
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - run: npm ci
+      - run: npm test
+  # make sure the action works on a clean machine without building
+  smoketest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./
+        with:
+          version: ^0.17
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check ./test/sample.lua
+  smoketest_latest_version_provided:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: ./
+        with:
+          version: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: --check ./test/sample.lua
+  # only install / cache the StyLua install, don't run it
+  smoketest_args_false:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Copy Test File
+        run: |
+          cp ./test/needs_spaces.lua{,.copy}
+
+      - uses: ./
+        with:
+          version: latest
+          token: ${{ secrets.GITHUB_TOKEN }}
+          args: false
+
+      - name: Confirm test file was not changed
+        run: |
+          cmp ./test/needs_spaces.lua{,.copy}
+
+      - name: Can run stylua independently
+        run: |
+          stylua --version

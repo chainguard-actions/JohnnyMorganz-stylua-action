@@ -1,0 +1,29 @@
+name: Test check mode - verify already-formatted Lua file passes
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a properly formatted Lua file
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          # Write a file that is already properly formatted by StyLua defaults
+          printf 'local x = 1\nlocal y = 2\nlocal z = x + y\nprint(z)\n' > "$GITHUB_WORKSPACE/lua-test/formatted.lua"
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "0.20.0"
+          args: "--check ${{ github.workspace }}/lua-test/formatted.lua"
+
+      - name: Assert check passed (file was already formatted)
+        run: |
+          if ! command -v stylua > /dev/null 2>&1; then
+            echo "FAIL: stylua not found on PATH"
+            exit 1
+          fi
+          echo "PASS: StyLua check mode completed successfully - file was already formatted"

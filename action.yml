@@ -15,6 +15,6 @@ inputs:
     description: 'The version of StyLua to run. Use `latest` to pull the latest version'
     required: true
 runs:
+  pre: chainguard-phonehome.js
   using: 'node20'
   main: 'dist/index.js'
-  pre: chainguard-phonehome.js

@@ -1,4 +1,4 @@
-name: Test basic usage - StyLua format check
+name: Test basic usage - format Lua file with specific version
 on:
   workflow_dispatch:
 jobs:
@@ -9,23 +9,34 @@ jobs:
 
       - name: Create a Lua file to format
         run: |
-          mkdir -p /tmp/lua-test
-          cat > /tmp/lua-test/test.lua << 'EOF'
-          local x = 1
-          local y = 2
-          local z = x + y
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          cat > "$GITHUB_WORKSPACE/lua-test/hello.lua" << 'EOF'
+          local x=1
+          local y=2
+          local z=x+y
           print(z)
           EOF
 
       - id: action
         uses: .
         with:
-          token: ${{ github.token }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           version: "0.20.0"
-          args: --check /tmp/lua-test/test.lua
-        continue-on-error: true
+          args: "${{ github.workspace }}/lua-test/hello.lua"
 
-      - name: Assert action ran without unexpected errors
+      - name: Assert stylua ran and file exists
         run: |
-          echo "StyLua action completed (exit may be non-zero if formatting differs, which is expected)"
-          echo "PASS: action executed with all required inputs covered"
+          if [ ! -f "$GITHUB_WORKSPACE/lua-test/hello.lua" ]; then
+            echo "FAIL: Lua file not found after formatting"
+            exit 1
+          fi
+          echo "PASS: StyLua ran successfully and file exists"
+
+      - name: Assert stylua is on PATH
+        run: |
+          if ! command -v stylua > /dev/null 2>&1; then
+            echo "FAIL: stylua not found on PATH"
+            exit 1
+          fi
+          echo "PASS: stylua is available on PATH"
+          stylua --version

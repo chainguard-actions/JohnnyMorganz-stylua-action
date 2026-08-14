@@ -1,0 +1,47 @@
+name: Test latest version of StyLua
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a Lua file to format
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          cat > "$GITHUB_WORKSPACE/lua-test/sample.lua" << 'EOF'
+          local function greet(name)
+          return "Hello, " .. name .. "!"
+          end
+          print(greet("World"))
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "latest"
+          args: "${{ github.workspace }}/lua-test/sample.lua"
+
+      - name: Assert stylua is on PATH and reports a version
+        run: |
+          if ! command -v stylua > /dev/null 2>&1; then
+            echo "FAIL: stylua not found on PATH"
+            exit 1
+          fi
+          VERSION_OUTPUT=$(stylua --version)
+          echo "stylua version: $VERSION_OUTPUT"
+          if [ -z "$VERSION_OUTPUT" ]; then
+            echo "FAIL: stylua --version returned empty output"
+            exit 1
+          fi
+          echo "PASS: stylua latest version is available"
+
+      - name: Assert Lua file still exists after formatting
+        run: |
+          if [ ! -f "$GITHUB_WORKSPACE/lua-test/sample.lua" ]; then
+            echo "FAIL: Lua file not found after formatting"
+            exit 1
+          fi
+          echo "PASS: Lua file exists after formatting"
