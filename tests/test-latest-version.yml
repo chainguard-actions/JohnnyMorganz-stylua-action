@@ -1,0 +1,28 @@
+name: Test StyLua latest version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a well-formatted Lua file
+        run: |
+          mkdir -p /tmp/lua-latest
+          printf 'local x = 1\nlocal y = 2\nlocal z = x + y\nprint(z)\n' > /tmp/lua-latest/main.lua
+          echo "Created Lua file:"
+          cat /tmp/lua-latest/main.lua
+
+      - name: Run StyLua with latest version
+        id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          version: "latest"
+          args: "--check /tmp/lua-latest/main.lua"
+
+      - name: Assert action completed successfully
+        run: |
+          echo "StyLua latest version check passed"
+          echo "PASS"

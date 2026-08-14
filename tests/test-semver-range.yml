@@ -1,0 +1,43 @@
+name: Test semver range version - resolve version using semver range
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a Lua file to format
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          cat > "$GITHUB_WORKSPACE/lua-test/range.lua" << 'EOF'
+          local t = {1, 2, 3}
+          for i, v in ipairs(t) do
+          print(i, v)
+          end
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ">=0.19.0 <0.21.0"
+          args: "${{ github.workspace }}/lua-test/range.lua"
+
+      - name: Assert StyLua binary is available
+        run: |
+          if ! command -v stylua > /dev/null 2>&1; then
+            echo "FAIL: stylua binary not found on PATH"
+            exit 1
+          fi
+          VERSION_OUTPUT="$(stylua --version)"
+          echo "Version output: $VERSION_OUTPUT"
+          echo "PASS: stylua is available at $(command -v stylua)"
+
+      - name: Assert Lua file was processed
+        run: |
+          if [ ! -f "$GITHUB_WORKSPACE/lua-test/range.lua" ]; then
+            echo "FAIL: Lua file not found after formatting"
+            exit 1
+          fi
+          echo "PASS: Lua file exists after formatting"

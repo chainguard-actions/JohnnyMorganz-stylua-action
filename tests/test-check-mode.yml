@@ -1,0 +1,39 @@
+name: Test check mode - verify already-formatted Lua file passes
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a well-formatted Lua file
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          # Write a properly formatted Lua file (4-space indent, standard style)
+          cat > "$GITHUB_WORKSPACE/lua-test/formatted.lua" << 'EOF'
+          local x = 1
+          local y = 2
+          local z = x + y
+          print(z)
+          EOF
+
+      - name: Install StyLua first to pre-format the file
+        id: install
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "0.20.0"
+          args: "${{ github.workspace }}/lua-test/formatted.lua"
+
+      - name: Run StyLua in check mode on the now-formatted file
+        id: check
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "0.20.0"
+          args: "--check ${{ github.workspace }}/lua-test/formatted.lua"
+
+      - name: Assert check mode passed (file is properly formatted)
+        run: |
+          echo "PASS: StyLua check mode succeeded - file is properly formatted"

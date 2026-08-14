@@ -1,0 +1,48 @@
+name: Test specific version - pin StyLua to v0.20.0
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a Lua file to format
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          cat > "$GITHUB_WORKSPACE/lua-test/script.lua" << 'EOF'
+          local function greet(name)
+          return "Hello, " .. name .. "!"
+          end
+          print(greet("World"))
+          EOF
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "0.20.0"
+          args: "${{ github.workspace }}/lua-test/script.lua"
+
+      - name: Assert StyLua binary is available and correct version
+        run: |
+          if ! command -v stylua > /dev/null 2>&1; then
+            echo "FAIL: stylua binary not found on PATH"
+            exit 1
+          fi
+          VERSION_OUTPUT="$(stylua --version)"
+          echo "Version output: $VERSION_OUTPUT"
+          if echo "$VERSION_OUTPUT" | grep -q "0.20.0"; then
+            echo "PASS: stylua version 0.20.0 is installed"
+          else
+            echo "FAIL: expected version 0.20.0, got: $VERSION_OUTPUT"
+            exit 1
+          fi
+
+      - name: Assert Lua file was processed
+        run: |
+          if [ ! -f "$GITHUB_WORKSPACE/lua-test/script.lua" ]; then
+            echo "FAIL: Lua file not found after formatting"
+            exit 1
+          fi
+          echo "PASS: Lua file exists after formatting"

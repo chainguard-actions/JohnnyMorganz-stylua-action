@@ -1,0 +1,28 @@
+name: Test StyLua basic check
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a well-formatted Lua file
+        run: |
+          mkdir -p /tmp/lua-test
+          printf 'local function greet(name)\n\tprint("Hello, " .. name)\nend\n\ngreet("world")\n' > /tmp/lua-test/hello.lua
+          echo "Created Lua file:"
+          cat /tmp/lua-test/hello.lua
+
+      - name: Run StyLua check on formatted file
+        id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          version: "0.20.0"
+          args: "--check /tmp/lua-test/hello.lua"
+
+      - name: Assert action completed successfully
+        run: |
+          echo "StyLua check passed - file is properly formatted"
+          echo "PASS"
