@@ -1,0 +1,35 @@
+name: Test StyLua latest version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a Lua file to format
+        run: |
+          mkdir -p /tmp/lua-latest
+          cat > /tmp/lua-latest/script.lua << 'EOF'
+          local function greet(name)
+          return "Hello, " .. name .. "!"
+          end
+          print(greet("World"))
+          EOF
+
+      - name: Run StyLua with latest version
+        id: action
+        uses: .
+        with:
+          token: ${{ github.token }}
+          version: "latest"
+          args: "/tmp/lua-latest/script.lua"
+
+      - name: Assert StyLua ran with latest version
+        run: |
+          echo "StyLua latest version action completed successfully"
+          if [ ! -f "/tmp/lua-latest/script.lua" ]; then
+            echo "FAIL: Lua file not found after formatting"
+            exit 1
+          fi
+          echo "PASS: Lua file exists after formatting with latest version"

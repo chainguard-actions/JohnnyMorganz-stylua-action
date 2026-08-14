@@ -1,0 +1,28 @@
+name: Test StyLua basic usage with latest version
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create a well-formatted Lua file
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          # Write a simple Lua file and let StyLua format it first, then check it
+          printf 'print("hello")\n' > "$GITHUB_WORKSPACE/lua-test/hello.lua"
+          echo "Created Lua file:"
+          cat "$GITHUB_WORKSPACE/lua-test/hello.lua"
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check "${{ github.workspace }}/lua-test/hello.lua"
+
+      - name: Assert action succeeded
+        run: |
+          echo "StyLua ran successfully with latest version"
+          echo "PASS"

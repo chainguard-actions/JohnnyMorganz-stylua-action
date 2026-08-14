@@ -1,0 +1,37 @@
+name: Test StyLua formats a Lua file in-place
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Create an unformatted Lua file
+        run: |
+          mkdir -p "$GITHUB_WORKSPACE/lua-test"
+          # Write a Lua file with inconsistent formatting (no spaces around operators)
+          printf 'local x=1\nlocal y=2\nprint(x+y)\n' \
+            > "$GITHUB_WORKSPACE/lua-test/format-me.lua"
+          echo "Created unformatted Lua file:"
+          cat "$GITHUB_WORKSPACE/lua-test/format-me.lua"
+
+      - id: action
+        uses: .
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: "0.20.0"
+          args: "${{ github.workspace }}/lua-test/format-me.lua"
+
+      - name: Assert file was formatted
+        run: |
+          echo "File content after formatting:"
+          cat "$GITHUB_WORKSPACE/lua-test/format-me.lua"
+          CONTENT=$(cat "$GITHUB_WORKSPACE/lua-test/format-me.lua")
+          echo "actual content: $CONTENT"
+          # StyLua should have formatted the file - it should now have spaces around =
+          if ! echo "$CONTENT" | grep -q "x = 1"; then
+            echo "FAIL: expected StyLua to format 'x=1' to 'x = 1'"
+            exit 1
+          fi
+          echo "PASS: StyLua formatted the file correctly"

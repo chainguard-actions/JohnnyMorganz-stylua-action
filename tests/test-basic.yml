@@ -1,4 +1,4 @@
-name: Test basic StyLua usage
+name: Test StyLua basic usage
 on:
   workflow_dispatch:
 jobs:
@@ -6,7 +6,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
-      - name: Create a Lua file to check
+
+      - name: Create a Lua file to format
         run: |
           mkdir -p /tmp/lua-test
           cat > /tmp/lua-test/hello.lua << 'EOF'
@@ -15,20 +16,20 @@ jobs:
           local z = x + y
           print(z)
           EOF
-      - id: action
+
+      - name: Run StyLua on Lua file
+        id: action
         uses: .
         with:
           token: ${{ github.token }}
-          version: latest
-          args: --check /tmp/lua-test/hello.lua
-        continue-on-error: true
-      - name: Assert action ran (StyLua was invoked)
+          version: "0.20.0"
+          args: "/tmp/lua-test/hello.lua"
+
+      - name: Assert StyLua ran successfully
         run: |
-          echo "Action outcome: ${{ steps.action.outcome }}"
-          # The action should complete (either pass or fail formatting check)
-          # We just verify it ran without a setup/download error
-          if [ "${{ steps.action.outcome }}" = "skipped" ]; then
-            echo "FAIL: action was skipped unexpectedly"
+          echo "StyLua action completed successfully"
+          if [ ! -f "/tmp/lua-test/hello.lua" ]; then
+            echo "FAIL: Lua file not found after formatting"
             exit 1
           fi
-          echo "PASS: action ran successfully"
+          echo "PASS: Lua file exists after formatting"
